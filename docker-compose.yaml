@@ -1,0 +1,56 @@
+# Servicos do Nexo. Credenciais do banco so no .env (copiado de .env.example).
+#
+# Execucao local pelo IDE (postgres e redis publicados em 127.0.0.1):
+#   docker compose up -d --wait postgres redis
+# Stack completa, com a API em container:
+#   docker compose up --build
+name: nexo
+
+services:
+  postgres:
+    image: postgres:16.9
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?defina POSTGRES_DB no .env}
+      POSTGRES_USER: ${POSTGRES_USER:?defina POSTGRES_USER no .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
+    ports:
+      # So loopback; mude POSTGRES_PORT no .env se a 5432 estiver ocupada.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # A imagem 16 declara VOLUME em /var/lib/postgresql/data.
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8.8.4
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Dentro da rede do compose o banco e o redis respondem pelo nome do servico, na porta interna.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: "6379"
+    ports:
+      - "${APP_PORT:-8080}:8080"
+
+volumes:
+  postgres-data:

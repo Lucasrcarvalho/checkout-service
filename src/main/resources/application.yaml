@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: nexo
+  profiles:
+    active: mock-services
+  config:
+    # Execucao local pelo IDE ou mvn: le o .env da pasta de trabalho. Ausente (Docker, CI), e ignorado.
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${POSTGRES_URL:}
+    username: ${POSTGRES_USER:}
+    password: ${POSTGRES_PASSWORD:}
+    hikari:
+      # Limita a espera por lock de linha (o checkout trava o carrinho com FOR UPDATE): estourado vira 503.
+      connection-init-sql: "SET lock_timeout='3s'"
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  data:
+    redis:
+      # O padrao do Lettuce e 60 s: com o Redis fora, o pre-checkout ficaria preso (CACHE-03).
+      timeout: 500ms
+      connect-timeout: 500ms
+
+app:
+  frontend:
+    payment-route: /checkout/pagamento
+  cors:
+    allowed-origins: http://localhost:4200
+  cache:
+    ttl: 10m
+  services:
+    connect-timeout: 1s
+    read-timeout: 2s
+    products:
+      base-url: http://localhost:${server.port:8080}
+    payment-methods:
+      base-url: http://localhost:${server.port:8080}
+
+springdoc:
+  api-docs:
+    version: openapi_3_1
+  swagger-ui:
+    path: /swagger-ui.html
+    urls-primary-name: BFF de checkout
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-components: always
+      show-details: never
