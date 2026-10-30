@@ -1,4 +1,4 @@
-# Nexo: BFF de checkout
+# BFF de Checkout
 
 BFF (Backend for Frontend) de um checkout de assinatura. O frontend tem três
 telas (pagamento, sucesso e erro); este serviço expõe as duas operações que
