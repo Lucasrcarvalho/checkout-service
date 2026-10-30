@@ -1,4 +1,4 @@
-# Testando os fluxos do BFF Nexo pelo Swagger UI
+# Testando os fluxos do BFF pelo Swagger UI
 
 Este passo a passo mostra como exercitar, só pelo navegador, os fluxos do BFF
 de checkout: criar um carrinho, pagar com cartão, pagar com Pix, provocar uma
